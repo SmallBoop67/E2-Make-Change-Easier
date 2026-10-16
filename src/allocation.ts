@@ -7,32 +7,53 @@ const readout = document.querySelector<HTMLParagraphElement>(
 )!;
 let producers = 2;
 
-function Kestrel() {
-  const production = producers * 3;
+interface ProvisioningFacts {
+  production: number;
+  consumption: number;
+  balance: number;
+  assigned: number;
+  capacity: number;
+}
+function balancing(assigned: number): ProvisioningFacts {
+  const production = assigned * 3;
+  const capacity = 6;
   const consumption = 6;
   const balance = production - consumption;
+  return { production, consumption, balance, assigned, capacity };
+}
+
+function CanvasDrawer(facts: ProvisioningFacts) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = i < producers ? "#27766b" : "#c9d2c9";
+  for (let i = 0; i < facts.capacity; i++) {
+    ctx.fillStyle = i < facts.assigned ? "#27766b" : "#c9d2c9";
     ctx.fillRect(18 + i * 45, 16, 36, 36);
-    ctx.fillStyle = i < producers ? "#ffffff" : "#233e43";
+    ctx.fillStyle = i < facts.assigned ? "#ffffff" : "#233e43";
     ctx.font = "16px system-ui";
     ctx.fillText(String(i + 1), 31 + i * 45, 40);
   }
   ctx.fillStyle = "#233e43";
   ctx.font = "14px system-ui";
-  ctx.fillText(`Producers: ${producers} / 6`, 18, 76);
-  ctx.fillText(`Production: ${production}`, 18, 102);
+  ctx.fillText(`Producers: ${facts.assigned} / ${facts.capacity}`, 18, 76);
+  ctx.fillText(`Production: ${facts.production}`, 18, 102);
   ctx.fillStyle = "#27766b";
-  ctx.fillRect(18, 110, production * 14, 20);
+  ctx.fillRect(18, 110, facts.production * 14, 20);
   ctx.fillStyle = "#233e43";
-  ctx.fillText(`Consumption: ${consumption}`, 18, 154);
+  ctx.fillText(`Consumption: ${facts.consumption}`, 18, 154);
   ctx.fillStyle = "#a44d23";
-  ctx.fillRect(18, 162, consumption * 14, 20);
+  ctx.fillRect(18, 162, facts.consumption * 14, 20);
+}
+
+function ReadOut(facts: ProvisioningFacts) {
   readout.textContent =
-    `Assigned: ${producers}/6 · Production: ${production} · Consumption: ${consumption} · Balance: ${
-      balance > 0 ? "+" : ""
-    }${balance}`;
+    `Assigned: ${facts.assigned}/${facts.capacity} · Production: ${facts.production} · Consumption: ${facts.consumption} · Balance: ${
+      facts.balance > 0 ? "+" : ""
+    }${facts.balance}`;
+}
+
+function Kestrel() {
+  const facts = balancing(producers);
+  CanvasDrawer(facts);
+  ReadOut(facts);
 }
 
 document.querySelector<HTMLButtonElement>("#allocation-less")!.onclick = () => {

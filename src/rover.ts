@@ -39,6 +39,7 @@ document.querySelector<HTMLButtonElement>("#rover-forward")!.onclick = () => {
   if (direction === 3) x = Math.max(0, x - 1);
   drawRover();
 };
+
 document.querySelector<HTMLButtonElement>("#rover-right")!.onclick = () => {
   direction = (direction + 1) % 4;
   drawRover();

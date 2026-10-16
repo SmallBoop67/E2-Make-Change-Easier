@@ -1,3 +1,4 @@
+// import { Certificate } from "node:crypto";
 export {};
 
 const canvas = document.querySelector<HTMLCanvasElement>("#allocation-canvas")!;
@@ -34,13 +35,16 @@ function CanvasDrawer(facts: ProvisioningFacts) {
   ctx.fillStyle = "#233e43";
   ctx.font = "14px system-ui";
   ctx.fillText(`Producers: ${facts.assigned} / ${facts.capacity}`, 18, 76);
-  ctx.fillText(`Production: ${facts.production}`, 18, 102);
-  ctx.fillStyle = "#27766b";
-  ctx.fillRect(18, 110, facts.production * 14, 20);
-  ctx.fillStyle = "#233e43";
-  ctx.fillText(`Consumption: ${facts.consumption}`, 18, 154);
-  ctx.fillStyle = "#a44d23";
-  ctx.fillRect(18, 162, facts.consumption * 14, 20);
+
+  for (let j = 0; j < ReportRows.length; j++) {
+    const row = ReportRows[j];
+    const value = row.pick(facts);
+    const barY = 110 + j * 52;
+    ctx.fillStyle = "#233e43";
+    ctx.fillText(`${row.label}: ${value}`, 18, barY - 8);
+    ctx.fillStyle = row.color;
+    ctx.fillRect(18, barY, value * 14, 20);
+  }
 }
 
 function ReadOut(facts: ProvisioningFacts) {
@@ -55,6 +59,22 @@ function Kestrel() {
   CanvasDrawer(facts);
   ReadOut(facts);
 }
+
+interface RowRecord {
+  label: string;
+  color: string;
+  pick: (facts: ProvisioningFacts) => number;
+}
+
+const ReportRows: RowRecord[] = [{
+  label: "Production",
+  color: "#27766b",
+  pick: (facts) => facts.production,
+}, {
+  label: "Consumption",
+  color: "#a44d23",
+  pick: (facts) => facts.consumption,
+}];
 
 document.querySelector<HTMLButtonElement>("#allocation-less")!.onclick = () => {
   producers = Math.max(0, producers - 1);

@@ -3,15 +3,21 @@ export {};
 const canvas = document.querySelector<HTMLCanvasElement>("#rover-canvas")!;
 const ctx = canvas.getContext("2d")!;
 const readout = document.querySelector<HTMLParagraphElement>("#rover-readout")!;
+const routeList = document.querySelector<HTMLOListElement>("#rover-pending")!;
+const runButton = document.querySelector<HTMLButtonElement>("#rover-run")!;
+const clearButton = document.querySelector<HTMLButtonElement>("#rover-clear")!;
+
 let x = 2;
 let y = 2;
 let direction = 0;
 
 interface Command {
   execute: () => void;
+  label: string;
 }
 
 const forwardCommand: Command = {
+  label: "Forward",
   execute: () => {
     const currentDirection = Compass[direction];
     x = x + currentDirection.dx;
@@ -23,11 +29,14 @@ const forwardCommand: Command = {
 };
 
 const rightCommand: Command = {
+  label: "Right",
   execute: () => {
     direction = (direction + 1) % Compass.length;
     drawRover();
   },
 };
+
+const plannedRoute: Command[] = [];
 
 interface DirectionRecord {
   name: string;
@@ -41,6 +50,35 @@ const Compass: DirectionRecord[] = [
   { name: "South", dx: 0, dy: +1 },
   { name: "West", dx: -1, dy: 0 },
 ];
+
+function updateRouteDisplay() {
+  routeList.replaceChildren();
+  for (const command of plannedRoute) {
+    const item = document.createElement("li");
+    item.textContent = command.label;
+    routeList.appendChild(item);
+  }
+  const isEmpty = plannedRoute.length === 0;
+  runButton.disabled = isEmpty;
+  clearButton.disabled = isEmpty;
+}
+
+function enqueue(command: Command) {
+  plannedRoute.push(command);
+  updateRouteDisplay();
+}
+
+function runRoute() {
+  while (plannedRoute.length > 0) {
+    plannedRoute.shift()!.execute();
+  }
+  updateRouteDisplay();
+}
+
+function clearRoute() {
+  plannedRoute.length = 0;
+  updateRouteDisplay();
+}
 
 function drawRover() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -67,16 +105,23 @@ function drawRover() {
 }
 
 document.querySelector<HTMLButtonElement>("#rover-forward")!.onclick = () => {
-  forwardCommand.execute();
+  enqueue(forwardCommand);
 };
 
 document.querySelector<HTMLButtonElement>("#rover-right")!.onclick = () => {
-  rightCommand.execute();
+  enqueue(rightCommand);
 };
+
+runButton.onclick = runRoute;
+clearButton.onclick = clearRoute;
+
 document.querySelector<HTMLButtonElement>("#rover-reset")!.onclick = () => {
   x = 2;
   y = 2;
   direction = 0;
+  plannedRoute.length = 0;
+  updateRouteDisplay();
   drawRover();
 };
 drawRover();
+updateRouteDisplay();

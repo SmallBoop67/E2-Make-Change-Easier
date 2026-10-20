@@ -55,16 +55,16 @@ function drawMeter(snapshot: ShieldSnapshot) {
     `Shield charge: ${snapshot.charge} / ${snapshot.capacity}`;
 }
 
-function updateStats(snapshot: ShieldSnapshot) {
-  panelUpdates++;
-  diagnostic.textContent = `Inspector deliveries: ${panelUpdates}`;
-  renderStats(snapshot);
-}
-
 function renderStats(snapshot: ShieldSnapshot) {
   if (!panel) return;
   panel.textContent =
     `Shield charge: ${snapshot.charge} · Missing charge: ${snapshot.missing}`;
+}
+
+function onInspectorDelivery(event: Event) {
+  panelUpdates++;
+  diagnostic.textContent = `Inspector deliveries: ${panelUpdates}`;
+  renderStats((event as CustomEvent<ShieldSnapshot>).detail);
 }
 
 function setCount(next: number) {
@@ -72,7 +72,6 @@ function setCount(next: number) {
   if (snapshot.charge === count) return;
   count = snapshot.charge;
   announceShieldChange(snapshot);
-  if (panel) updateStats(snapshot);
 }
 
 shieldEvents.addEventListener(shieldChanged, (event) => {
@@ -93,9 +92,11 @@ document.querySelector<HTMLButtonElement>("#counter-open")!.onclick = () => {
   panel = document.createElement("p");
   host.append(panel);
   renderStats(currentSnapshot());
+  shieldEvents.addEventListener(shieldChanged, onInspectorDelivery);
 };
 document.querySelector<HTMLButtonElement>("#counter-close")!.onclick = () => {
   if (!panel) return;
+  shieldEvents.removeEventListener(shieldChanged, onInspectorDelivery);
   panel.remove();
   panel = null;
 };

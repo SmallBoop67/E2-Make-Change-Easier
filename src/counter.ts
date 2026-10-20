@@ -33,6 +33,15 @@ function currentSnapshot(): ShieldSnapshot {
   return createShieldSnapshot(count, Capacity);
 }
 
+const shieldEvents = new EventTarget();
+const shieldChanged = "shieldchanged";
+
+function announceShieldChange(snapshot: ShieldSnapshot) {
+  shieldEvents.dispatchEvent(
+    new CustomEvent<ShieldSnapshot>(shieldChanged, { detail: snapshot }),
+  );
+}
+
 function drawMeter(snapshot: ShieldSnapshot) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < snapshot.capacity; i++) {
@@ -62,9 +71,13 @@ function setCount(next: number) {
   const snapshot = createShieldSnapshot(next, Capacity);
   if (snapshot.charge === count) return;
   count = snapshot.charge;
-  drawMeter(snapshot);
+  announceShieldChange(snapshot);
   if (panel) updateStats(snapshot);
 }
+
+shieldEvents.addEventListener(shieldChanged, (event) => {
+  drawMeter((event as CustomEvent<ShieldSnapshot>).detail);
+});
 
 document.querySelector<HTMLButtonElement>("#counter-less")!.onclick = () => {
   setCount(count - 1);
